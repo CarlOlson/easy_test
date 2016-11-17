@@ -1,0 +1,26 @@
+* About
+This library aims to be an easy way to write tests for Prolog code.
+
+#+BEGIN_SRC prolog
+  % example.pl
+
+  ?- ['easy_test/easy_test'].
+
+  test :-
+      expect add1(0) to eq 1.
+
+  % EOF %
+
+  ?- test.
+  !!! FAIL
+          add1/2 is not defined
+
+  ?- [user].
+  |: add1(0, 0).
+  |: <EOF>
+  true.
+
+  ?- test.
+  !!! FAIL
+          add1(0, 0) should be add1(0, 1)
+#+END_SRC
