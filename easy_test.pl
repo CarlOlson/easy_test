@@ -1,5 +1,5 @@
 
-:- module(easy_test, [expect/1]).
+:- module(easy_test, [expect/1, describe/2]).
 
 :- op(510, fx,  user:(expect)).
 :- op(501, xfx, user:(to)).
@@ -18,7 +18,7 @@ eq(B, A, Result) :-
 	 (Av == B *->
 	      Result = t;
 	  Result = result(atMb, Av, B, " should be "));
-     Result = result(atMb, Av, B, " failed, should be ")).
+     Result = result(atMb, '_', B, " failed, should be ")).
 
 not_eq(B, A, Result) :-
     check_existance(A, 1),
@@ -26,7 +26,7 @@ not_eq(B, A, Result) :-
 	 (Av \== B *->
 	      Result = t;
 	  Result = result(atM, Av, B, " should be false"));
-     Result = result(atMb, Av, B, " failed, should not be ")).
+     Result = result(atMb, '_', B, " failed, should not be ")).
 
 fail(A, Result) :-
     check_existance(A, 0),
@@ -34,6 +34,33 @@ fail(A, Result) :-
 	 Result = result(aM, A, _, " should fail");
      Result = t).
 
+
+describe(Pred, Tests) :-
+    (current_predicate(Pred) *-> true;
+     fail_msg, write(Pred), write(" is not defined"), nl,
+     fail),
+
+    Pred =.. [_, F, _],
+    transform_it(F, Tests, Tests2),
+    forall(member(Test, Tests2),
+	   callable(Test) *->
+	       call(Test);
+	   true).
+
+
+transform_it(F, Term, Out) :-
+    is_list(Term), !,
+    bagof(Sub, E^(member(E, Term),
+		  transform_it(F, E, Sub)), Out).
+transform_it(F, Term, Out) :-
+    Term =.. [it|Args], !,
+    Out  =.. [ F|Args].
+transform_it(F, it, F) :- !.
+transform_it(F, Term, Out) :-
+    Term =.. [F2|Args],
+    transform_it(F, Args, Args2),
+    Out =.. [F2|Args2], !.
+transform_it(_, Term, Term) :- !.
 
 check_existance(Term, ExtraCount) :-
     Term =.. [F | Args],
