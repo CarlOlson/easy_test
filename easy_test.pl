@@ -14,17 +14,19 @@ to(A, B) :-
 
 eq(B, A, Result) :-
     check_existance(A, 1),
-    call(A, Av),
-    (Av == B *->
-	 Result = t;
-     Result = result(atMb, Av, B, " should be ")).
+    (call(A, Av) *->
+	 (Av == B *->
+	      Result = t;
+	  Result = result(atMb, Av, B, " should be "));
+     Result = result(atMb, Av, B, " failed, should be ")).
 
 not_eq(B, A, Result) :-
     check_existance(A, 1),
-    call(A, Av),
-    (Av \== B *->
-	 Result = t;
-     Result = result(atM, Av, B, " should be false")).
+    (call(A, Av) *->
+	 (Av \== B *->
+	      Result = t;
+	  Result = result(atM, Av, B, " should be false"));
+     Result = result(atMb, Av, B, " failed, should not be ")).
 
 fail(A, Result) :-
     check_existance(A, 0),
@@ -46,7 +48,6 @@ check_existance(Term, ExtraCount) :-
      write(F), write("/"), write(ArgCount),
      write(" is not defined"), nl,
      fail).
-
 
 check_result(_, _, t).
 check_result(A, _, result(Type, Av, Bv, Msg)) :-
