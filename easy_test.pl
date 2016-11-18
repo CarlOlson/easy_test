@@ -6,22 +6,31 @@
 :- op(500, fy,  user:(eq)).
 :- op(500, fy,  user:(not_eq)).
 
-
 expect(A) :- A.
 
 to(A, B) :-
-    check_existance(A, 1),
-    call(A, Av),
-    call(B, Av, Result),
+    call(B, A, Result),
     check_result(A, B, Result), !.
 
-eq(B, A, t) :-
-    A == B, !.
-eq(B, A, result(aMb, A, B, " should be ")).
+eq(B, A, Result) :-
+    check_existance(A, 1),
+    call(A, Av),
+    (Av == B *->
+	 Result = t;
+     Result = result(atMb, Av, B, " should be ")).
 
-not_eq(B, A, t) :-
-    A \== B, !.
-not_eq(B, A, result(aM, A, B, " should be false")).
+not_eq(B, A, Result) :-
+    check_existance(A, 1),
+    call(A, Av),
+    (Av \== B *->
+	 Result = t;
+     Result = result(atM, Av, B, " should be false")).
+
+fail(A, Result) :-
+    check_existance(A, 0),
+    (call(A) *->
+	 Result = result(aM, A, _, " should fail");
+     Result = t).
 
 
 check_existance(Term, ExtraCount) :-
@@ -50,18 +59,24 @@ check_result(A, _, result(Type, Av, Bv, Msg)) :-
     BTerm =.. [Fa | BTermArgs],
 
     fail_msg,
-    print_result(Type, ATerm, BTerm, Msg),
-
+    print_result(Type,
+		 [ATerm, A, Av],
+		 [BTerm, Bv],
+		 Msg),
     fail.
 
-print_result(aM, A, _, Msg) :-
-    write_term(A, [spacing(next_argument)]),
+print_result(atM, [ATerm|_], _, Msg) :-
+    write_term(ATerm, [spacing(next_argument)]),
     write(Msg),
     nl.
-print_result(aMb, A, B, Msg) :-
+print_result(atMb, [ATerm|_], [BTerm|_], Msg) :-
+    write_term(ATerm, [spacing(next_argument)]),
+    write(Msg),
+    write_term(BTerm, [spacing(next_argument)]),
+    nl.
+print_result(aM, [_,A,_], _, Msg) :-
     write_term(A, [spacing(next_argument)]),
     write(Msg),
-    write_term(B, [spacing(next_argument)]),
     nl.
 
 fail_msg :- write("!!! FAIL\n\t").
