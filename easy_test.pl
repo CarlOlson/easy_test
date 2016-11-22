@@ -6,10 +6,14 @@
 :- op(500, fy,  user:(eq)).
 :- op(500, fy,  user:(not_eq)).
 
-expect(A) :- A.
+expect(to(A, B)) :-
+    to(A, B), !.
+expect(A) :-
+    \+ A =.. [to|_],
+    to(A, succeed).
 
 to(A, B) :-
-    call(B, A, Result),
+    call(B, A, Result), !,
     check_result(A, B, Result), !.
 
 eq(B, A, Result) :-
@@ -33,6 +37,12 @@ fail(A, Result) :-
     (call(A) *->
 	 Result = result(aM, A, _, " should fail");
      Result = t).
+
+succeed(A, Result) :-
+    check_existance(A, 0),
+    (call(A) *->
+	 Result = t;
+     Result = result(aM, A, _, " should succeed")).
 
 
 describe(Pred, Tests) :-
