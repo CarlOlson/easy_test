@@ -1,8 +1,10 @@
 
 :- module(easy_test, [expect/1, describe/2]).
+:- use_module(library(clpfd)).
 
 :- op(510, fx,  user:(expect)).
 :- op(501, xfx, user:(to)).
+:- op(500, fy,  user:(always)).
 :- op(500, fy,  user:(eq)).
 :- op(500, fy,  user:(not_eq)).
 
@@ -31,6 +33,14 @@ not_eq(B, A, Result) :-
 	      Result = t;
 	  Result = result(atM, Av, B, " should be false"));
      Result = result(atMb, '_', B, " failed, should not be ")).
+
+always(B, A, Result) :-
+    bind_fd(A, Ss),
+    maplist(indomain, Ss),
+
+    (call(B, A, Result),
+     Result \= t, !);
+    Result = t.
 
 fail(A, Result) :-
     check_existance(A, 0),
@@ -62,6 +72,21 @@ describe(Pred, Tests) :-
     call(Tests0).
 
 
+bind_fd(Term, [Term]) :-
+    clpfd:fd_var(Term), !.
+bind_fd(Term, []) :-
+    var(Term), !.
+bind_fd([T|Ts], Out) :-
+    !,
+    bind_fd(T, O1),
+    bind_fd(Ts, O2),
+    append(O1, O2, Out).
+bind_fd(Term, Out) :-
+    compound(Term), !,
+    Term =.. [_|Args],
+    bind_fd(Args, Out).
+bind_fd(_, []).
+
 remove_comments(L, L0) :-
     exclude(string, L, L0).
 
@@ -73,17 +98,21 @@ list_to_callable([F|L], Callable) :-
     list_to_callable(L, SubCalls),
     Callable =.. [',', F, SubCalls].
 
+transform_it(_, Term, Term) :-
+    var(Term), !.
+transform_it(F, Term, [O|Os]) :-
+    is_list(Term),
+    \+ length(Term, 0), !,
+    Term = [T|Ts],
+    transform_it(F, T, O),
+    transform_it(F, Ts, Os).
 transform_it(F, Term, Out) :-
-    is_list(Term), !,
-    bagof(Sub, E^(member(E, Term),
-		  transform_it(F, E, Sub)), Out).
-transform_it(F, Term, Out) :-
-    ground(Term),
+    compound(Term),
     Term =.. [it|Args], !,
     Out  =.. [ F|Args].
 transform_it(F, it, F) :- !.
 transform_it(F, Term, Out) :-
-    ground(Term),
+    compound(Term),
     Term =.. [F2|Args],
     transform_it(F, Args, Args2),
     Out =.. [F2|Args2], !.
