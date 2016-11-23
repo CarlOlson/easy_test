@@ -50,23 +50,40 @@ describe(Pred, Tests) :-
      fail_msg, write(Pred), write(" is not defined"), nl,
      fail),
 
-    Pred =.. [_, F, _],
+    Pred =.. ['/', F, _],
     transform_it(F, Tests, Tests2),
-    forall(member(Test, Tests2),
-	   callable(Test) *->
-	       call(Test);
-	   true).
 
+    remove_comments(Tests2, Tests1),
+
+    check_callable(Tests1),
+
+    list_to_callable(Tests1, Tests0),
+
+    call(Tests0).
+
+
+remove_comments(L, L0) :-
+    exclude(string, L, L0).
+
+check_callable(L) :-
+    include(callable, L, L).
+
+list_to_callable([], true).
+list_to_callable([F|L], Callable) :-
+    list_to_callable(L, SubCalls),
+    Callable =.. [',', F, SubCalls].
 
 transform_it(F, Term, Out) :-
     is_list(Term), !,
     bagof(Sub, E^(member(E, Term),
 		  transform_it(F, E, Sub)), Out).
 transform_it(F, Term, Out) :-
+    ground(Term),
     Term =.. [it|Args], !,
     Out  =.. [ F|Args].
 transform_it(F, it, F) :- !.
 transform_it(F, Term, Out) :-
+    ground(Term),
     Term =.. [F2|Args],
     transform_it(F, Args, Args2),
     Out =.. [F2|Args2], !.
