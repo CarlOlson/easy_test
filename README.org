@@ -4,23 +4,45 @@ This library aims to be an easy way to write tests for Prolog code.
 #+BEGIN_SRC prolog
   % example.pl
 
-  ?- ['easy_test/easy_test'].
+  :- ['easy_test'].
+  :- use_module(library(clpfd)).
 
   test :-
-      expect add1(0) to eq 1.
+      describe(add1/2,
+               [
+                   expect add1(0) to eq 1,
 
-  % EOF %
+                   expect add1(1, 2) to succeed,
+
+                   % expect default is "to succeed"
+                   expect add1(2, 3),
+
+                   expect add1(3, 3) to fail,
+
+                   % supports clp(fd) via "to always"
+                   N #>= 0, N #=< 100,
+                   expect add1(N, _) to always succeed
+               ]).
+#+END_SRC
+
+#+BEGIN_SRC prolog
+  ?- ['test'].
+  true.
 
   ?- test.
   !!! FAIL
           add1/2 is not defined
 
-  ?- [user].
-  |: add1(0, 0).
-  |: <EOF>
+  ?- assertz((add1(0, 0))).
   true.
 
   ?- test.
   !!! FAIL
           add1(0, 0) should be add1(0, 1)
+
+  ?- asserta(( add1(N, N0) :- N0 #= N + 1 )).
+  true.
+
+  ?- test.
+  true.
 #+END_SRC
