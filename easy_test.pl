@@ -20,19 +20,24 @@ to(A, B) :-
 
 eq(B, A, Result) :-
     check_existance(A, 1),
-    (call(A, Av) *->
+    push_arg(A, Av, Call),
+    push_arg(A, B, Expected),
+    (call(Call) *->
 	 (Av == B *->
 	      Result = t;
-	  Result = result(atMb, Av, B, " should be "));
-     Result = result(atMb, '_', B, " failed, should be ")).
+	  Result = result("~p should be ~p~n", [Call, Expected])
+	 );
+     Result = result("~p failed, should be ~p~n", [Call, Expected])).
 
 not_eq(B, A, Result) :-
     check_existance(A, 1),
-    (call(A, Av) *->
+    push_arg(A, Av, Call),
+    push_arg(A, B, Expected),
+    (call(Call) *->
 	 (Av \== B *->
 	      Result = t;
-	  Result = result(atM, Av, B, " should be false"));
-     Result = result(atMb, '_', B, " failed, should not be ")).
+	  Result = result("~p should be false~n", [Call]));
+     Result = result("~p failed, should not be ~p~n", [Call, Expected])).
 
 always(B, A, Result) :-
     bind_fd(A, Ss),
@@ -45,14 +50,14 @@ always(B, A, Result) :-
 fail(A, Result) :-
     check_existance(A, 0),
     (call(A) *->
-	 Result = result(aM, A, _, " should fail");
+	 Result = result("~p should fail~n", [A]);
      Result = t).
 
 succeed(A, Result) :-
     check_existance(A, 0),
     (call(A) *->
 	 Result = t;
-     Result = result(aM, A, _, " should succeed")).
+     Result = result("~p should succeed~n", [A])).
 
 
 describe(Pred, Tests) :-
@@ -69,7 +74,7 @@ describe(Pred, _) :-
     compound(Pred), !,
     log(fail, "~p is not defined~n", Pred),
     fail.
-describe(Pred, Tests) :-
+describe(_, Tests) :-
     is_list(Tests), !,
     remove_comments(Tests, Tests1),
 
@@ -78,7 +83,7 @@ describe(Pred, Tests) :-
     call(Tests0).
 describe(Pred, _) :-
     log(fail,
-	"in ~p, tests should be a list~n",
+	"in ~p, Tests should be a list~n",
 	[describe(Pred, 'Tests')]),
     fail.
 
@@ -137,44 +142,19 @@ check_existance(Term, ExtraCount) :-
     (current_predicate(_, Pred)
      *-> true ;
 
-     fail_msg,
-     write(F), write("/"), write(ArgCount),
-     write(" is not defined"), nl,
+     log(fail, "~p/~p is not defined~n", [F, ArgCount]),
      fail).
 
 check_result(_, _, t).
-check_result(A, _, result(Type, Av, Bv, Msg)) :-
-    A =.. [Fa | Arga],
-
-    append(Arga, [Av], ATermArgs),
-    ATerm =.. [Fa | ATermArgs],
-
-    append(Arga, [Bv], BTermArgs),
-    BTerm =.. [Fa | BTermArgs],
-
-    fail_msg,
-    print_result(Type,
-		 [ATerm, A, Av],
-		 [BTerm, Bv],
-		 Msg),
+check_result(_, _, result(Msg, Args)) :-
+    log(fail, Msg, Args),
     fail.
 
-print_result(atM, [ATerm|_], _, Msg) :-
-    write_term(ATerm, [spacing(next_argument)]),
-    write(Msg),
-    nl.
-print_result(atMb, [ATerm|_], [BTerm|_], Msg) :-
-    write_term(ATerm, [spacing(next_argument)]),
-    write(Msg),
-    write_term(BTerm, [spacing(next_argument)]),
-    nl.
-print_result(aM, [_,A,_], _, Msg) :-
-    write_term(A, [spacing(next_argument)]),
-    write(Msg),
-    nl.
-
-fail_msg :- write("!!! FAIL\n\t").
+push_arg(Term, Arg, Out) :-
+    Term =.. [F | Args],
+    append(Args, [Arg], NewArgs),
+    Out =.. [F | NewArgs].
 
 log(fail, Msg, Args) :-
-    fail_msg,
+    format("!!! FAIL\n\t"),
     format(Msg, Args).
