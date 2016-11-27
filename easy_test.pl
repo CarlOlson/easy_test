@@ -56,21 +56,31 @@ succeed(A, Result) :-
 
 
 describe(Pred, Tests) :-
-    (current_predicate(Pred) *-> true;
-     fail_msg, write(Pred), write(" is not defined"), nl,
-     fail),
+    compound(Pred),
+    is_list(Tests),
+    current_predicate(Pred), !,
 
     Pred =.. ['/', F, _],
-    transform_it(F, Tests, Tests2),
+    transform_it(F, Tests, Tests0),
 
-    remove_comments(Tests2, Tests1),
+    term_string(Pred, PredString),
+    describe(PredString, Tests0).
+describe(Pred, _) :-
+    compound(Pred), !,
+    log(fail, "~p is not defined~n", Pred),
+    fail.
+describe(Pred, Tests) :-
+    is_list(Tests), !,
+    remove_comments(Tests, Tests1),
 
     check_callable(Tests1),
-
     list_to_callable(Tests1, Tests0),
-
     call(Tests0).
-
+describe(Pred, _) :-
+    log(fail,
+	"in ~p, tests should be a list~n",
+	[describe(Pred, 'Tests')]),
+    fail.
 
 bind_fd(Term, [Term]) :-
     clpfd:fd_var(Term), !.
@@ -164,3 +174,7 @@ print_result(aM, [_,A,_], _, Msg) :-
     nl.
 
 fail_msg :- write("!!! FAIL\n\t").
+
+log(fail, Msg, Args) :-
+    fail_msg,
+    format(Msg, Args).
