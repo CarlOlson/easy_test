@@ -4,19 +4,26 @@
 
 :- op(510, fx,  user:(expect)).
 :- op(501, xfx, user:(to)).
+:- op(501, xfx, user:(output_to)).
 :- op(500, fy,  user:(always)).
 :- op(500, fy,  user:(match)).
 :- op(500, fy,  user:(eq)).
 :- op(500, fy,  user:(not_eq)).
 
 expect(to(A, B)) :-
-    to(A, B), !.
+    !, to(A, B).
+expect(output_to(A, B)) :-
+    !, output_to(A, B).
 expect(A) :-
-    \+ A =.. [to|_],
     to(A, succeed).
 
 to(A, B) :-
     call(B, A, Result), !,
+    check_result(Result), !.
+
+output_to(A, B) :-
+    with_output_to(string(Av), (call(A) -> true; true)),
+    call(B, Av, Result), !,
     check_result(Result), !.
 
 eq(B, A, Result) :-
