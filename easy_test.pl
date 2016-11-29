@@ -17,7 +17,7 @@ expect(A) :-
 
 to(A, B) :-
     call(B, A, Result), !,
-    check_result(A, B, Result), !.
+    check_result(Result), !.
 
 eq(B, A, Result) :-
     check_existance(A, 1),
@@ -164,8 +164,8 @@ check_existance(Term, ExtraCount) :-
      log(fail, "~p/~p is not defined~n", [F, ArgCount]),
      fail).
 
-check_result(_, _, t).
-check_result(_, _, result(Msg, Args)) :-
+check_result(t).
+check_result(result(Msg, Args)) :-
     log(fail, Msg, Args),
     fail.
 
