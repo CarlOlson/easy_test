@@ -5,6 +5,7 @@
 :- op(510, fx,  user:(expect)).
 :- op(501, xfx, user:(to)).
 :- op(500, fy,  user:(always)).
+:- op(500, fy,  user:(match)).
 :- op(500, fy,  user:(eq)).
 :- op(500, fy,  user:(not_eq)).
 
@@ -46,6 +47,24 @@ always(B, A, Result) :-
     (call(B, A, Result),
      Result \= t, !);
     Result = t.
+
+%% TODO truncate result output
+match(B, A, Result) :-
+    callable(A),
+    string(B),
+    push_arg(A, Av, Call),
+    (call(Call) ->
+	 (sub_string(Av, _, _, _, B) ->
+	      Result = t;
+	  Result = result("In ~p, ~p should match ~p~n", [Call, Av, B]));
+     Result = result("~p failed, ~p should match ~p~n", [Call, Av, B])).
+match(B, A, Result) :-
+    string(A),
+    string(B),
+    (sub_string(A, _, _, _, B) *->
+	 Result = t;
+     Result = result("~p should match ~p~n", [A, B])).
+match(B, A, result("~p and ~p should be strings for match", [A, B])).
 
 fail(A, Result) :-
     check_existance(A, 0),
