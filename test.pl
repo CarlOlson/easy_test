@@ -9,44 +9,30 @@ add1(-1, _) :- !, fail.
 add1(N, N).
 
 test :-
-    \+ describe(add1/2, [ expect it(0) to eq 1 ]),
-    \+ describe(add1/2, [ expect it(-1) to eq 0 ]),
+    expect describe(add1/2, [ expect it( 0) to eq 1 ])
+    output_to match "should be add1(0,1)",
+    expect describe(add1/2, [ expect it(-1) to eq 0 ])
+    output_to match "failed, should be add1(-1,0)",
 
-    \+ describe(add1/2, [ expect it(0) to not_eq 0 ]),
-    \+ describe(add1/2, [ expect it(-1) to not_eq -1 ]),
+    expect describe(add1/2, [ expect it( 0) to not_eq  0 ])
+    output_to match "should be false",
+    expect describe(add1/2, [ expect it(-1) to not_eq -1 ])
+    output_to match "failed, should not be add1(-1,-1)",
 
-    \+ describe(add1/2, [ expect it(-2, _) to fail ]),
-    \+ describe(add1/2, [ expect it(-1, _) to succeed ]),
+    expect describe(add1/2, [ expect it(-2, _) to fail ])
+    output_to match "should fail",
+    expect describe(add1/2, [ expect it(-1, _) to succeed ])
+    output_to match "should succeed",
 
-    \+ describe(something/2, []),
+    expect describe(something/2, [])
+    output_to match "something/2 is not defined",
 
-    \+ describe("strings should be ok", [ expect add1(0, 1) ]),
+    expect describe("strings should be ok", [ expect add1(0, 1) ])
+    output_to match "should succeed",
 
-    \+ describe("lists only...", not_list),
-
-    write('DONE').
+    expect describe("lists only...", not_list)
+    output_to match "should be a list".
 
 main :-
     test, halt;
     halt.
-
-%%%% Expected output:
-%% !!! FAIL
-%% 	add1(0,0) should be add1(0,1)
-%% !!! FAIL
-%% 	add1(-1,_652) failed, should be add1(-1,0)
-%% !!! FAIL
-%% 	add1(0,0) should be false
-%% !!! FAIL
-%% 	add1(-1,_652) failed, should not be add1(-1,-1)
-%% !!! FAIL
-%% 	add1(-2,-2) should fail
-%% !!! FAIL
-%% 	add1(-1,_394) should succeed
-%% !!! FAIL
-%% 	something/2 is not defined
-%% !!! FAIL
-%% 	add1(0,1) should succeed
-%% !!! FAIL
-%% 	in describe("lists only...",'Tests'), Tests should be a list
-%% DONE
