@@ -1,14 +1,15 @@
 
-:- ['easy_test'].
+:- module(tests, [add1/2]).
+:- use_module(easy_test).
 
 :- initialization main.
 
-:- dynamic sub1/2.
-
+%% add1(?, ?)
+% a faulty implementation of add1/2
 add1(-1, _) :- !, fail.
 add1(N, N).
 
-test :-
+acceptance :-
     expect describe(add1/2, [ expect it( 0) to eq 1 ])
     output_to match "should be add1(0,1)",
     expect describe(add1/2, [ expect it(-1) to eq 0 ])
@@ -33,6 +34,18 @@ test :-
     expect describe("lists only...", not_list)
     output_to match "should be a list".
 
-main :-
-    test, halt;
-    halt.
+unit :-
+    describe(describe/2,
+    	     [
+		 %% NOTE this is a feature :-)
+    		 %% "it/N enforces arity specified in describe/2",
+    		 %% expect it(add1/2, [ expect it(x, y) to eq z ])
+		 %% output_to match "arity"
+    	     ]).
+
+test :-
+    unit,
+    acceptance.
+
+main :- test, halt.
+main :- halt.
