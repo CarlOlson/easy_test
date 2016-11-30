@@ -86,15 +86,15 @@ succeed(A, Result) :-
      Result = result("~p should succeed~n", [A])).
 
 
-describe(Pred, Tests) :-
-    compound(Pred),
+describe(F/Arity, Tests) :-
+    atom(F),
+    integer(Arity),
     is_list(Tests),
-    current_predicate(Pred), !,
+    current_predicate(F/Arity), !,
 
-    Pred =.. ['/', F, _],
     transform_it(F, Tests, Tests0),
 
-    term_string(Pred, PredString),
+    term_string(F/Arity, PredString),
     describe(PredString, Tests0).
 describe(Pred, _) :-
     compound(Pred), !,

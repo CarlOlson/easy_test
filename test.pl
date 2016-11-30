@@ -40,12 +40,19 @@ unit :-
 		 %% NOTE this is a feature :-)
     		 %% "it/N enforces arity specified in describe/2",
     		 %% expect it(add1/2, [ expect it(x, y) to eq z ])
-		 %% output_to match "arity"
+		 %% output_to match "arity",
+
+		 "only accepts valid method predicates",
+		 expect it(add1/2, []) to succeed,
+		 expect it("add1"/2, []) to fail
     	     ]).
 
 test :-
     unit,
     acceptance.
 
-main :- test, halt.
-main :- halt.
+main :-
+    (test ->
+	 write('SUCCESS');
+     write('FAIL')),
+    halt.
