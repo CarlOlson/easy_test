@@ -1,14 +1,15 @@
 
-:- module(easy_test, [expect/1, describe/2]).
+:- module(easy_test, [
+	      expect/1,
+	      describe/2,
+	      op(510, fx,  expect),
+	      op(501, xfx, to),
+	      op(501, xfx, output_to),
+	      op(500, fy,  always),
+	      op(500, fy,  match),
+	      op(500, fy,  eq),
+	      op(500, fy,  not_eq)]).
 :- use_module(library(clpfd)).
-
-:- op(510, fx,  user:(expect)).
-:- op(501, xfx, user:(to)).
-:- op(501, xfx, user:(output_to)).
-:- op(500, fy,  user:(always)).
-:- op(500, fy,  user:(match)).
-:- op(500, fy,  user:(eq)).
-:- op(500, fy,  user:(not_eq)).
 
 expect(to(A, B)) :-
     !, to(A, B).
