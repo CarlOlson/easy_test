@@ -2,13 +2,13 @@
 :- module(easy_test, [
 	      expect/1,
 	      describe/2,
-	      op(510, fx,  expect),
-	      op(501, xfx, to),
-	      op(501, xfx, output_to),
-	      op(500, fy,  always),
-	      op(500, fy,  match),
-	      op(500, fy,  eq),
-	      op(500, fy,  not_eq)]).
+	      op(710, fx,  expect),
+	      op(701, xfx, to),
+	      op(701, xfx, output_to),
+	      op(700, fy,  always),
+	      op(700, fy,  match),
+	      op(700, fy,  eq),
+	      op(700, fy,  not_eq)]).
 :- use_module(library(clpfd)).
 
 expect(to(A, B)) :-
@@ -28,9 +28,9 @@ output_to(A, B) :-
     check_result(Result), !.
 
 eq(B, A, Result) :-
-    check_existance(A, 1),
     push_arg(A, Av, Call),
     push_arg(A, B, Expected),
+    check_existance(Call),
     (call(Call) *->
 	 (Av == B *->
 	      Result = t;
@@ -39,9 +39,9 @@ eq(B, A, Result) :-
      Result = result("~p failed, should be ~p~n", [Call, Expected])).
 
 not_eq(B, A, Result) :-
-    check_existance(A, 1),
     push_arg(A, Av, Call),
     push_arg(A, B, Expected),
+    check_existance(Call),
     (call(Call) *->
 	 (Av \== B *->
 	      Result = t;
@@ -75,13 +75,13 @@ match(B, A, Result) :-
 match(B, A, result("~p and ~p should be strings for match", [A, B])).
 
 fail(A, Result) :-
-    check_existance(A, 0),
+    check_existance(A),
     (call(A) *->
 	 Result = result("~p should fail~n", [A]);
      Result = t).
 
 succeed(A, Result) :-
-    check_existance(A, 0),
+    check_existance(A),
     (call(A) *->
 	 Result = t;
      Result = result("~p should succeed~n", [A])).
@@ -91,7 +91,7 @@ describe(F/Arity, Tests) :-
     atom(F),
     integer(Arity),
     is_list(Tests),
-    current_predicate(F/Arity), !,
+    check_existance(F/Arity), !,
 
     transform_it(F, Tests, Tests0),
 
@@ -160,27 +160,28 @@ transform_it(F, Term, Out) :-
     Out =.. [F2|Args2], !.
 transform_it(_, Term, Term) :- !.
 
-check_existance(Term, ExtraCount) :-
-    Term =.. [F | Args],
-    length(Args, SubCount),
-    ArgCount is SubCount + ExtraCount,
-    functor(Pred, F, ArgCount),
-
-    (current_predicate(_, Pred)
-     *-> true ;
-
-     log(fail, "~p/~p is not defined~n", [F, ArgCount]),
-     fail).
+check_existance(Term)   :-
+    term_to_mfa(Term, MFA),
+    current_predicate(MFA).
+check_existance(Term) :-
+    log(fail, "~p is not defined~n", Term),
+    fail.
 
 check_result(t).
 check_result(result(Msg, Args)) :-
     log(fail, Msg, Args),
     fail.
 
+push_arg(M:Term, Arg, M:Out) :-
+    push_arg(Term, Arg, Out).
 push_arg(Term, Arg, Out) :-
     Term =.. [F | Args],
     append(Args, [Arg], NewArgs),
     Out =.. [F | NewArgs].
+
+term_to_mfa(F/A,      F/A).
+term_to_mfa(M:Term, M:F/A) :- term_to_mfa(Term, F/A).
+term_to_mfa(Term,     F/A) :- functor(Term, F, A).
 
 log(fail, Msg, Args) :-
     format("!!! FAIL\n\t"),
