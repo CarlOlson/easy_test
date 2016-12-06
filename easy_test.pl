@@ -90,29 +90,27 @@ succeed(A, Result) :-
 describe(F/Arity, Tests) :-
     atom(F),
     integer(Arity),
-    is_list(Tests),
-    check_existance(F/Arity), !,
-
-    transform_it(F, Tests, Tests0),
-
-    term_string(F/Arity, PredString),
-    describe(PredString, Tests0).
-describe(Pred, _) :-
-    compound(Pred), !,
-    log(fail, "~p is not defined~n", Pred),
-    fail.
-describe(_, Tests) :-
     is_list(Tests), !,
-    remove_comments(Tests, Tests1),
-
-    check_callable(Tests1),
-    list_to_callable(Tests1, Tests0),
-    call(Tests0).
+    (check_existance(F/Arity) ->
+	 describe_eval(F, Tests)).
+describe(Doc, Tests) :-
+    string(Doc),
+    is_list(Tests), !,
+    describe_eval(Tests).
 describe(Pred, _) :-
     log(fail,
-	"in ~p, Tests should be a list~n",
-	[describe(Pred, 'Tests')]),
+	"~p bad args, expected describe(predicate|string, list)~n",
+	[describe(Pred, tests)]),
     fail.
+
+describe_eval(F, Tests) :-
+    transform_it(F, Tests, Tests1),
+    describe_eval(Tests1).
+describe_eval(Tests) :-
+    remove_comments(Tests, Tests1),
+    list_to_callable(Tests1, Tests2),
+    call(Tests2).
+
 
 bind_fd(Term, [Term]) :-
     clpfd:fd_var(Term), !.
@@ -130,10 +128,7 @@ bind_fd(Term, Out) :-
 bind_fd(_, []).
 
 remove_comments(L, L0) :-
-    exclude(string, L, L0).
-
-check_callable(L) :-
-    include(callable, L, L).
+    include(callable, L, L0).
 
 list_to_callable([], true).
 list_to_callable([F|L], Callable) :-
