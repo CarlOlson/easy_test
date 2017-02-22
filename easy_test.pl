@@ -109,7 +109,8 @@ describe_eval(F, Tests) :-
 describe_eval(Tests) :-
     remove_comments(Tests, Tests1),
     list_to_callable(Tests1, Tests2),
-    call(Tests2).
+    call(Tests2),
+    !.
 
 
 bind_fd(Term, [Term]) :-
