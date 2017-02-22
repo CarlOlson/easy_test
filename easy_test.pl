@@ -179,5 +179,6 @@ term_to_mfa(M:Term, M:F/A) :- term_to_mfa(Term, F/A).
 term_to_mfa(Term,     F/A) :- functor(Term, F, A).
 
 log(fail, Msg, Args) :-
-    format("!!! FAIL\n\t"),
+    format('!!! '),
+    ansi_format([fg(red)], 'FAIL\n\t', []),
     format(Msg, Args).
